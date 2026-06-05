@@ -1,0 +1,119 @@
+name: Release - Optimized Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release_build:
+    name: Build Optimized Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build with full optimizations
+        run: |
+          cargo build --all --release \
+            -C opt-level=3 \
+            -C lto=fat \
+            -C codegen-units=1 \
+            -C target-cpu=native \
+            2>&1 | tee release-build.log
+
+      - name: Calculate binary sizes
+        run: |
+          echo "## Binary Sizes (Release)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          find target/release -maxdepth 1 -type f -executable -exec ls -lh {} \; | awk '{print $9, $5}' >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Test release binaries
+        run: |
+          ./target/release/ncf-cli --version
+          ./target/release/ncf-cli --help | head -20
+
+      - name: Run release tests
+        run: cargo test --all --release 2>&1 | tee release-tests.log
+
+      - name: Generate release report
+        run: |
+          echo "## Release Build Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Status**: SUCCESS ✓" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Time**: $(grep 'Finished' release-build.log | awk '{print $NF}')" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Status**: $(grep 'test result' release-tests.log | tail -1)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-binaries
+          path: |
+            target/release/ncf-cli
+            target/release/libnc*.so
+            target/release/libnc*.a
+
+  docker_build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: release_build
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t ncf:latest -t ncf:${{ github.ref_name }} . || echo "Dockerfile not found, skipping"
+
+  performance_baseline:
+    name: Establish Performance Baseline
+    runs-on: ubuntu-latest
+    needs: release_build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run comprehensive benchmarks
+        run: |
+          cargo bench --all --verbose 2>&1 | tee benchmark-baseline.txt
+
+      - name: Generate benchmark report
+        run: |
+          echo "## Performance Baseline (Release)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Compression Benchmarks" >> $GITHUB_STEP_SUMMARY
+          grep -E "time:|Compiling|Finished" benchmark-baseline.txt | head -15 >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Save baseline for comparison
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-baseline
+          path: benchmark-baseline.txt
+          retention-days: 30

@@ -11,12 +11,24 @@ pub mod index;
 pub mod schema;
 /// High-performance optimization utilities.
 pub mod optimization;
+/// SIMD kernels for compression and data processing
+pub mod simd_kernels;
+/// LRU cache with concurrent access
+pub mod cache;
+/// Zero-copy metadata handling
+pub mod metadata_zero_copy;
+/// Advanced index optimization techniques
+pub mod index_optimization;
 
 pub use chunk::*;
 pub use header::*;
 pub use index::*;
 pub use schema::*;
 pub use optimization::*;
+pub use simd_kernels::*;
+pub use cache::*;
+pub use metadata_zero_copy::*;
+pub use index_optimization::*;
 
 /// NCF Format Structure Constants
 ///

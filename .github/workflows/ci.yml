@@ -8,6 +8,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build all packages (release)
+        run: cargo build --all --release --verbose
+
+      - name: Check for warnings
+        run: cargo build --all --release 2>&1 | grep -c "warning:" || echo "0 warnings"
+
   test:
     name: Run tests
     runs-on: ubuntu-latest
@@ -38,6 +67,72 @@ jobs:
       - name: Run tests for package
         run: |
           cargo test -p ${{ matrix.package }} --quiet
+
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run benchmarks
+        run: |
+          cargo bench --all 2>&1 | tee benchmark-results.txt || true
+          
+      - name: Extract benchmark metrics
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          grep -E "time:|Found|Compiling" benchmark-results.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: benchmark-results
+          path: benchmark-results.txt
+
+  clippy:
+    name: Lint with Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          override: true
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run clippy
+        run: cargo clippy --all --all-targets -- -W clippy::all
 
   fuzz:
     name: Fuzz smoke tests

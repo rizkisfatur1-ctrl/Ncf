@@ -11,6 +11,8 @@ pub mod writer;
 pub mod stream;
 /// Parallel I/O optimization utilities.
 pub mod parallel;
+/// Parallel chunk scheduler with work-stealing queue
+pub mod chunk_scheduler;
 
 #[cfg(feature = "http")]
 /// HTTP-backed access for remote NCF files.
@@ -20,6 +22,7 @@ pub use mmap::NcfMmap;
 pub use reader::NcfReader;
 pub use writer::NcfWriter;
 pub use parallel::{WriteProgress, BufferedWriter};
+pub use chunk_scheduler::{ChunkScheduler, ChunkTask, ChunkResult, AdaptiveBatchScheduler};
 #[doc(hidden)]
 pub use stream::NcfStream;
 #[cfg(feature = "http")]
