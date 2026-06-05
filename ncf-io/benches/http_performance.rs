@@ -1,4 +1,5 @@
-#![cfg(feature = "http")]
+// Benchmark for HTTP-based NCF reader performance
+// Note: Requires http feature but we include this in benchmarks
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use tempfile::TempDir;

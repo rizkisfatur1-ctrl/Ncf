@@ -91,6 +91,7 @@ impl NcfWriter {
 
         let schema_offset = FILE_HEADER_PREFIX_SIZE + header_len;
 
+        // Prepare chunks sequentially to ensure consistent ordering
         let prepared_chunks: Vec<PreparedChunk> = self
             .tensors
             .iter()

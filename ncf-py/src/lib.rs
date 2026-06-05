@@ -1,3 +1,5 @@
+mod py_utils;
+
 use ncf_core::header::{Metadata, NcfHeader, NcfFlags};
 use ncf_core::schema::{Compression, DType, Encoding, Layout, TensorSchema};
 use ncf_io::NcfWriter;
@@ -6,63 +8,10 @@ use pyo3::exceptions::{PyIOError, PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use std::collections::BTreeMap;
 use std::fs;
+use py_utils::VectorizedConverter;
 
 fn tensor_data_to_numpy<'py>(py: Python<'py>, schema: &TensorSchema, data: &[u8]) -> PyResult<&'py PyAny> {
-    let shape: Vec<usize> = schema.shape.iter().map(|&dim| dim as usize).collect();
-    match schema.dtype {
-        DType::U8 => {
-            let array = PyArray::from_slice(py, data);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        DType::I8 => {
-            let values = data.iter().map(|&b| b as i8).collect::<Vec<_>>();
-            let array = PyArray::from_vec(py, values);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        DType::I16 => {
-            let values = data
-                .chunks_exact(2)
-                .map(|chunk| i16::from_le_bytes(chunk.try_into().unwrap_or([0, 0])))
-                .collect::<Vec<_>>();
-            let array = PyArray::from_vec(py, values);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        DType::I32 => {
-            let values = data
-                .chunks_exact(4)
-                .map(|chunk| i32::from_le_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])))
-                .collect::<Vec<_>>();
-            let array = PyArray::from_vec(py, values);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        DType::F32 => {
-            let values = data
-                .chunks_exact(4)
-                .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])))
-                .collect::<Vec<_>>();
-            let array = PyArray::from_vec(py, values);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        DType::F64 => {
-            let values = data
-                .chunks_exact(8)
-                .map(|chunk| f64::from_le_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0, 0, 0, 0, 0])))
-                .collect::<Vec<_>>();
-            let array = PyArray::from_vec(py, values);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-        _ => {
-            let array = PyArray::from_slice(py, data);
-            array.reshape(shape.as_slice())?;
-            Ok(array)
-        }
-    }
+    VectorizedConverter::to_numpy(py, schema, data)
 }
 
 #[pyfunction]

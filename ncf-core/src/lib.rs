@@ -9,11 +9,14 @@ pub mod header;
 pub mod index;
 /// Tensor schemas and related enums.
 pub mod schema;
+/// High-performance optimization utilities.
+pub mod optimization;
 
 pub use chunk::*;
 pub use header::*;
 pub use index::*;
 pub use schema::*;
+pub use optimization::*;
 
 /// NCF Format Structure Constants
 ///

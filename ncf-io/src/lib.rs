@@ -9,6 +9,8 @@ pub mod reader;
 pub mod writer;
 /// Streaming API placeholder (hidden until implemented.
 pub mod stream;
+/// Parallel I/O optimization utilities.
+pub mod parallel;
 
 #[cfg(feature = "http")]
 /// HTTP-backed access for remote NCF files.
@@ -17,6 +19,7 @@ pub mod http_reader;
 pub use mmap::NcfMmap;
 pub use reader::NcfReader;
 pub use writer::NcfWriter;
+pub use parallel::{WriteProgress, BufferedWriter};
 #[doc(hidden)]
 pub use stream::NcfStream;
 #[cfg(feature = "http")]

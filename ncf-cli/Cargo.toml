@@ -9,3 +9,5 @@ clap = { version = "4.3", features = ["derive"] }
 ncf-convert = { path = "../ncf-convert" }
 ncf-io = { path = "../ncf-io" }
 ncf-core = { path = "../ncf-core" }
+rayon = "1.8"
+indicatif = "0.17"

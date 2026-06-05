@@ -16,11 +16,15 @@ pub mod reader;
 /// Append-only writer with async block flushing.
 pub mod writer;
 
+/// True columnar storage optimization for KV cache.
+pub mod columnar;
+
 pub use crate::error::KvcacheError;
 pub use crate::header::{BLOCK_TOKEN_COUNT, KVCACHE_HEADER_SIZE, KvCacheConfig, KvCacheHeader};
 pub use crate::index::{ChunkIndexEntry, KvcacheIndex};
 pub use crate::reader::KvcacheReader;
 pub use crate::writer::KvCacheWriter;
+pub use crate::columnar::{ColumnarBlockMetadata, ColumnarIndex, ComponentType};
 
 /// Result type returned by ncf-kvcache operations.
 pub type Result<T> = std::result::Result<T, KvcacheError>;

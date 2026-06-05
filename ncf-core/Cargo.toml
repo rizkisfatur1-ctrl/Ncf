@@ -10,6 +10,10 @@ blake3 = "1.5"
 xxhash-rust = { version = "0.8", features = ["xxh3"] }
 bitflags = { version = "2.11", features = ["serde"] }
 thiserror = "1.0"
+parking_lot = "0.12"
+smallvec = "1.11"
+bytes = "1"
+arrayvec = { version = "0.7", features = ["serde"] }
 
 [dev-dependencies]
 criterion = { workspace = true }

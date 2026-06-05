@@ -20,6 +20,9 @@ bytes = { version = "1", optional = true }
 futures = { version = "0.3", optional = true }
 tokio = { version = "1", features = ["io-util", "fs"], optional = true }
 reqwest = { version = "0.12", features = ["stream"], optional = true }
+rayon = "1.8"
+parking_lot = "0.12"
+crossbeam-channel = "0.5"
 
 [dev-dependencies]
 criterion = { workspace = true }
@@ -39,6 +42,7 @@ path = "benches/ncf_performance.rs"
 name = "http_performance"
 harness = false
 path = "benches/http_performance.rs"
+required-features = ["http"]
 
 [features]
 streaming = ["tokio", "futures", "bytes"]

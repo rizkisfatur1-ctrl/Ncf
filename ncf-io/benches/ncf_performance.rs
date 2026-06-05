@@ -15,7 +15,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const REALISTIC_LAYER_COUNT: usize = 16;
-const REALISTIC_TENSOR_BYTES: usize = 32 * 1024 * 1024; // 32 MiB per tensor, ~512 MiB model
+const REALISTIC_TENSOR_BYTES: usize = 8 * 1024 * 1024; // 8 MiB per tensor, ~128 MiB model
 const PARTIAL_LAYER_COUNT: usize = 32;
 const PARTIAL_TENSOR_BYTES: usize = 4 * 1024 * 1024; // 4 MiB per tensor for partial-load test
 

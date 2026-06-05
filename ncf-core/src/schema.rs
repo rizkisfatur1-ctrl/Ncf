@@ -119,3 +119,62 @@ impl fmt::Display for DType {
         }
     }
 }
+
+impl DType {
+    /// Get the size in bytes of a single element of this dtype.
+    #[inline]
+    pub const fn size_bytes(&self) -> usize {
+        match self {
+            DType::F64 => 8,
+            DType::F32 => 4,
+            DType::F16 => 2,
+            DType::BF16 => 2,
+            DType::I32 => 4,
+            DType::I16 => 2,
+            DType::I8 => 1,
+            DType::U8 => 1,
+            DType::Q4K => 1, // 4-bit quantized, packed
+            DType::Q4_0 => 1, // 4-bit quantized, packed
+            DType::Q8_0 => 1, // 8-bit quantized
+            DType::Custom(_) => 0, // Unknown size
+        }
+    }
+
+    /// Check if this dtype is floating-point
+    #[inline]
+    pub const fn is_float(&self) -> bool {
+        matches!(self, DType::F64 | DType::F32 | DType::F16 | DType::BF16)
+    }
+
+    /// Check if this dtype is integer
+    #[inline]
+    pub const fn is_int(&self) -> bool {
+        matches!(self, DType::I32 | DType::I16 | DType::I8 | DType::U8)
+    }
+
+    /// Check if this dtype is quantized
+    #[inline]
+    pub const fn is_quantized(&self) -> bool {
+        matches!(self, DType::Q4K | DType::Q4_0 | DType::Q8_0)
+    }
+}
+
+impl TensorSchema {
+    /// Calculate total number of elements in this tensor
+    #[inline]
+    pub fn num_elements(&self) -> u64 {
+        self.shape.iter().product()
+    }
+
+    /// Calculate total uncompressed byte size of this tensor
+    #[inline]
+    pub fn byte_size(&self) -> u64 {
+        self.num_elements() * self.dtype.size_bytes() as u64
+    }
+
+    /// Check if tensor data is likely to benefit from compression
+    #[inline]
+    pub fn should_compress(&self) -> bool {
+        self.byte_size() > 64 * 1024 // > 64KB
+    }
+}
